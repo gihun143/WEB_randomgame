@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+  }
+
+  .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 80%;
+    max-width: 1200px;
+  }
+
+  .game-board {
+    text-align: center;
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 40px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 70%;
+  }
+
+  .score-board {
+    text-align: left;
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 40px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 30%;
+  }
+
+  .cell {
+    width: 50px;
+    height: 50px;
+    border: 1px solid #ccc;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 18px;
+    cursor: pointer;
+    background-color: #ddd;
+  }
+
+  .score-list {
+    list-style: none;
+    padding: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="game-board">
+    <h1>특정 버튼 찾기 게임</h1>
+    <p>점수: <span id="score">100</span>점</p>
+
+    <table>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="score-board">
+    <h2>순위표</h2>
+    <ul class="score-list" id="scoreList">
+    </ul>
+  </div>
+</div>
+
+<script>
+const gridSize = 10;
+const totalButtons = 10;
+
+let buttons = [];
+let targetButtonsClicked = 0;
+let score = 100;
+
+function initializeButtons() {
+  for (let i = 0; i < gridSize; i++) {
+    buttons[i] = [];
+    for (let j = 0; j < gridSize; j++) {
+      buttons[i][j] = {
+        target: false,
+        clicked: false,
+      };
+    }
+  }
+
+  // 랜덤한 위치에 targetButton을 설정 (10개)
+  for (let i = 0; i < totalButtons; i++) {
+    let row, col;
+    do {
+      row = Math.floor(Math.random() * gridSize);
+      col = Math.floor(Math.random() * gridSize);
+    } while (buttons[row][col].target);
+    buttons[row][col].target = true;
+  }
+}
+
+function updateScore() {
+  const scoreElement = document.getElementById("score");
+  scoreElement.textContent = score;
+}
+
+function renderGrid() {
+  const tbody = document.querySelector("tbody");
+  tbody.innerHTML = "";
+  for (let i = 0; i < gridSize; i++) {
+    const row = document.createElement("tr");
+    for (let j = 0; j < gridSize; j++) {
+      const cell = document.createElement("td");
+      cell.className = "cell";
+      if (buttons[i][j].clicked) {
+        cell.style.backgroundColor = buttons[i][j].target ? "green" : "red";
+      }
+      cell.addEventListener("click", () => {
+        if (!buttons[i][j].clicked) {
+          buttons[i][j].clicked = true;
+          if (buttons[i][j].target) {
+            targetButtonsClicked++;
+            if (targetButtonsClicked === totalButtons) {
+              const playerName = prompt("모든 특정 버튼을 찾았습니다! 이름을 입력하세요:");
+              addScore(playerName, score);
+              alert("게임 종료!");
+              renderScoreList();
+            }
+          } else {
+            score--;
+            updateScore();
+          }
+          renderGrid();
+        }
+      });
+      row.appendChild(cell);
+    }
+    tbody.appendChild(row);
+  }
+}
+
+function addScore(playerName, playerScore) {
+  const scoreList = JSON.parse(localStorage.getItem("scoreList")) || [];
+  scoreList.push({ name: playerName, score: playerScore });
+  localStorage.setItem("scoreList", JSON.stringify(scoreList));
+}
+
+function renderScoreList() {
+  const scoreList = JSON.parse(localStorage.getItem("scoreList")) || [];
+  const scoreListElement = document.getElementById("scoreList");
+  scoreListElement.innerHTML = "";
+  scoreList.sort((a, b) => b.score - a.score);
+  scoreList.forEach((entry, index) => {
+    const listItem = document.createElement("li");
+    listItem.textContent = `${index + 1}. ${entry.name}: ${entry.score}점`;
+    scoreListElement.appendChild(listItem);
+  });
+}
+
+initializeButtons();
+updateScore();
+renderGrid();
+renderScoreList();
+</script>
+
+</body>
+</html>
